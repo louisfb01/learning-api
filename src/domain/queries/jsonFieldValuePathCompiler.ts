@@ -1,6 +1,6 @@
-import { Queue } from "queue-typescript";
 import resourceArrayFields from "../resourceArrayFields";
 import FieldPathDecomposed from "./fieldPathDecomposed";
+import indexArrayFieldDetector from "./fields/indexArrayFieldDetector";
 import queryStringEscaper from "./queryStringEscaper";
 
 function getFieldPathCompiled(fieldPathEscaped: string): string {
@@ -27,9 +27,12 @@ function getFieldPathCompiled(fieldPathEscaped: string): string {
     return pathCompiled;
 }
 
-function getPathCompiled(path: string): string {
+function getPathCompiled(path: string, selectorLabel?: string): string {
     const fieldPathEscaped = queryStringEscaper.escape(path);
-
+    const isIndexArrayField = indexArrayFieldDetector.isIndexArrayField(fieldPathEscaped)
+    if(isIndexArrayField && selectorLabel){
+        return getIndexPathCompiled(path, selectorLabel)
+    }
     return getFieldPathCompiled(fieldPathEscaped);
 }
 
@@ -54,6 +57,20 @@ function getJsonPathCompiled(path: string): string {
     return pathCompiled;
 }
 
+function getIndexPathCompiled(path: string, selectorLabel:string): string {
+    const fieldPathEscaped = queryStringEscaper.escape(path);
+    const pathDecomposed = new FieldPathDecomposed(fieldPathEscaped);
+
+    let pathCompiled = `${selectorLabel}_table.resource`;
+
+
+    while (pathDecomposed.length > 1) {
+        const currentPathElement = pathDecomposed.next().value;
+        pathCompiled += `->'${currentPathElement.pathElement}'`;
+    }
+
+    return pathCompiled;
+}
 export default {
-    getPathCompiled, getJsonPathCompiled
+    getPathCompiled, getJsonPathCompiled, getIndexPathCompiled
 }

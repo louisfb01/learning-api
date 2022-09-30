@@ -16,8 +16,8 @@ export default class GroupBySqlBuilder {
         this.sqlBuilder.requestBuilders.push(groupByBuilder.build);
     }
 
-    field(field: Field, subqueryName: string) {
-        const builderFunction = () => groupByFieldBuilder.build(field, subqueryName);
+    field(field: Field) {
+        const builderFunction = () => groupByFieldBuilder.build(field);
         this.sqlBuilder.requestBuilders.push(builderFunction);
 
         return this;

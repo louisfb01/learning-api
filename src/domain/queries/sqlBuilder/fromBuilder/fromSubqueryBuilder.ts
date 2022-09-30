@@ -26,7 +26,7 @@ function build(selector: Selector, field: Field, subqueryName: string) {
         fieldPathNormalized.push(pathNormalized.next().value);
     }
 
-    return `(SELECT ${fieldPathNormalized.join(', ')} FROM ${selector.resource}) AS ${subqueryName}`;
+    return `(SELECT ${fieldPathNormalized.join(', ')} FROM ${selector.label}) AS ${subqueryName}`;
 }
 
 export default {

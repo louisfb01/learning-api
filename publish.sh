@@ -1,5 +1,5 @@
 rm -r -f ./build
-npm install
+npm ci
 npm run build
 docker build -t coda-learning-api:latest .
 

@@ -11,6 +11,7 @@ const values = [
     "interpretation",
     "interpretation.coding",
     "bodySite.coding",
+    "value.CodeableConcept.coding",
 
     /* Encounter */
     "location",
@@ -19,6 +20,12 @@ const values = [
     /* Location */
     "type",
     "type.coding",
+    "physicalType.coding",
+    "identifier",
+
+    /*medicationAdministration */
+    "medication.CodeableConcept.coding",
+    "contained.code.coding",
 
 ]
 

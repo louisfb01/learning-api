@@ -37,7 +37,9 @@ async function getPrepareResponse(selector: Selector,
     const job = await Redis.setRedisJobId(response, jobID);
     const redisResult = {
         job: job,
-        query: queryAndResult.query
+        query: queryAndResult.query,
+        count: dataset.xs.length,
+        totalCount: result.length
     }
     return redisResult;
 }

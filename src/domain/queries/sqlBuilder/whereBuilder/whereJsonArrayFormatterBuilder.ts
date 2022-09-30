@@ -1,6 +1,7 @@
 import resourceArrayFields from "../../../resourceArrayFields";
 import FieldPathDecomposed from "../../fieldPathDecomposed";
 import arrayFieldDetector from "../../fields/arrayFieldDetector";
+import indexArrayFieldDetector from "../../fields/indexArrayFieldDetector";
 import jsonFieldValuePathCompiler from "../../jsonFieldValuePathCompiler";
 import { pathAndPathElement } from "../../pathAndPathElement";
 import queryStringEscaper from "../../queryStringEscaper";
@@ -8,10 +9,12 @@ import queryStringEscaper from "../../queryStringEscaper";
 export default class WhereJsonArrayFormatterBuilder {
     pathEscaped: string;
     pathDecomposed: FieldPathDecomposed;
+    selectorLabel: string;
 
-    constructor(fieldPath: string) {
+    constructor(fieldPath: string, selectorLabel:string) {
         this.pathEscaped = queryStringEscaper.escape(fieldPath);
         this.pathDecomposed = new FieldPathDecomposed(this.pathEscaped);
+        this.selectorLabel = queryStringEscaper.escape(selectorLabel)
     }
 
     getElementsToLastArray() {
@@ -52,8 +55,9 @@ export default class WhereJsonArrayFormatterBuilder {
         let jsonPath = '';
 
         const isArrayField = arrayFieldDetector.isArrayField(this.pathEscaped);
-        if (!isArrayField) {
-            return jsonFieldValuePathCompiler.getPathCompiled(this.pathEscaped);
+        const isIndexArrayField = indexArrayFieldDetector.isIndexArrayField(this.pathEscaped)
+        if (!isArrayField || isIndexArrayField) {
+            return jsonFieldValuePathCompiler.getPathCompiled(this.pathEscaped, this.selectorLabel);
         }
 
         const elementsUntilArray = this.getElementsToLastArray();
@@ -61,8 +65,10 @@ export default class WhereJsonArrayFormatterBuilder {
         for (let pathElement of elementsUntilArray) {
             this.pathDecomposed.next(); // Clear elements that are considered to be used in array portion.
         }
-
-        jsonPath += this.getPathFromElements();
+        
+        jsonPath += isIndexArrayField
+            ? ""
+            : this.getPathFromElements();
 
         return jsonPath;
     }

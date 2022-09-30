@@ -66,11 +66,8 @@ async function getTrainResponse(jobID: string, weights: any): Promise<TrainRespo
 
     let history = await TrainingModel.fitDataset(
         trainDataset, {epochs: epochs, validationData: validationDataset}
-    );
-
-    const result = TrainingModel.predict(
-        tf.tensor2d([[0, 22, 12.708312234248]]));
-    console.log(result.dataSync());
+    )
+    
     
     const responseMetrics = {
         acc: history.history.acc[epochs-1],

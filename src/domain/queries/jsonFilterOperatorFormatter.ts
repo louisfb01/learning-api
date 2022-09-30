@@ -2,28 +2,36 @@ import Filter from "../../models/request/filter";
 
 function formatOperatorForSql(filter: Filter) {
     const filterOperator = filter.operator.replace(/_/g, '').toLowerCase();
+    
+    if (['is', 'equals', 'on', 'equal'].some(op => op === filterOperator)) {
+        if(filter.value.toLowerCase() === 'null') {
+            return 'is';
+        }
 
-    if (['is', 'equals', 'on'].some(op => op === filterOperator)) {
         return '=';
     }
 
-    if (['not', 'isnot', 'notequals', 'noton'].some(op => op === filterOperator)) {
+    if (['not', 'isnot', 'notequals', 'noton', 'not_equal', 'notequal'].some(op => op === filterOperator)) {
+        if(filter.value.toLowerCase() === 'null') {
+            return 'is not';
+        }
+
         return '!=';
     }
 
-    if (['after', 'morethan'].some(op => op === filterOperator)) {
+    if (['after', 'morethan', 'greater'].some(op => op === filterOperator)) {
         return '>';
     }
 
-    if (['afteroron', 'moreorequalthan'].some(op => op === filterOperator)) {
+    if (['afteroron', 'moreorequalthan', 'greater_or_equal', 'greaterorequal'].some(op => op === filterOperator)) {
         return '>=';
     }
 
-    if (['before', 'lessthan'].some(op => op === filterOperator)) {
+    if (['before', 'lessthan', 'less'].some(op => op === filterOperator)) {
         return '<';
     }
 
-    if (['beforeoron', 'lessorequalthan'].some(op => op === filterOperator)) {
+    if (['beforeoron', 'lessorequalthan', 'less_or_equal', 'lessorequal'].some(op => op === filterOperator)) {
         return '<=';
     }
 

@@ -11,6 +11,7 @@ import fromResourceTableBuilder from "./fromResourceTableBuilder";
 import fromSubqueryBuilder from "./fromSubqueryBuilder";
 import fromPossibleJoinBuilder from "./join/fromPossibleJoinBuilder";
 import fromPossibleFieldTypeJoinBuilder from "./join/fromPossibleFieldTypeJoinBuilder";
+import limitBuilder from "../limitBuilder/limitBuilder";
 
 export default class FromSqlBuilder {
     sqlBuilder: SqlBuilder;
@@ -25,8 +26,10 @@ export default class FromSqlBuilder {
         return this;
     }
 
-    crossJoinForArrayFilters() {
-        this.sqlBuilder.requestBuilders.push(fromCrossJoinBuilder.build);
+    crossJoinForArrayFilters(field?: Field) {
+        const builderFunction = (selector: Selector) => fromCrossJoinBuilder.build(selector, field);
+
+        this.sqlBuilder.requestBuilders.push(builderFunction);
         return this;
     }
 
@@ -55,6 +58,11 @@ export default class FromSqlBuilder {
     groupBy() {
         const groupBySqlBuilder = new GroupBySqlBuilder(this.sqlBuilder);
         return groupBySqlBuilder;
+    }
+
+    limit(){
+        this.sqlBuilder.requestBuilders.push(limitBuilder.build);
+        return this;
     }
 
     build(selector: Selector, filterFieldTypes: Map<Filter, FieldInfo>) {

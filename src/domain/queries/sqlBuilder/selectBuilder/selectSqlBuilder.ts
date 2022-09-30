@@ -9,6 +9,7 @@ import selectBuilder from "./selectBuilder";
 import selectCountAllBuilder from "./selectCountAllBuilder";
 import selectCountSubqueryFieldBuilder from "./selectCountSubqueryFieldBuilder";
 import selectDistinctBuilder from "./selectDistinctBuilder";
+import selectFieldBuilder from "./selectFieldBuilder";
 import selectFieldTypesBuilder from "./selectFieldTypesBuilder";
 import selectFilterTypesBuilder from "./selectFilterTypesBuilder";
 import selectJoinIdBuilder from "./selectJoinIdBuilder";
@@ -70,7 +71,12 @@ export default class SelectSqlBuilder {
         this.sqlBuilder.requestBuilders.push(selectCountAllBuilder.build);
         return this;
     }
+    field(field: Field) {
+        const builderFunction = () => selectFieldBuilder.build(field);
+        this.sqlBuilder.requestBuilders.push(builderFunction);
 
+        return this;
+    }
     subqueryField(field: Field, subqueryName: string) {
         const builderFunction = () => selectSubqueryFieldBuilder.build(field, subqueryName);
         this.sqlBuilder.requestBuilders.push(builderFunction);

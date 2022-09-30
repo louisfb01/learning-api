@@ -10,7 +10,7 @@ function getFilterNormalized(filter: Filter, filterFields: Map<Filter, FieldInfo
     if (!fieldInfo) throw new Error('No matching field for filter.')
 
     const filterPathNormalized = `${subqueryName}.${fieldPathFormatter.formatPath(filter.path)}`;
-    const filterValue = jsonQueryValueFormatter.formatValueForSql(filter.value, fieldInfo);
+    const filterValue = jsonQueryValueFormatter.formatValueForSql(filter, fieldInfo);
     const sqlOperant = jsonFilterOperatorFormatter.formatOperatorForSql(filter);
 
     return `${filterPathNormalized} ${sqlOperant} ${filterValue}`;

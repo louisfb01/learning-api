@@ -1,11 +1,16 @@
+import Field from "../../../../../models/request/field";
 import Selector from "../../../../../models/request/selector";
 import CrossJoinFieldLevelBuilder from "./crossJoinFieldLevelBuilder";
 
 export default class CrossJoinForLevelBuilder {
     fieldLevelBuilders: CrossJoinFieldLevelBuilder[];
 
-    constructor(selector: Selector) {
+    constructor(selector: Selector, field?: Field) {
         const uniqueFieldPaths = new Set<string>();
+
+        if (field) {
+            uniqueFieldPaths.add(field.path)
+        }
 
         selector.filters.forEach(filter => uniqueFieldPaths.add(filter.path));
 
