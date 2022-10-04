@@ -4,7 +4,9 @@
   "main": "index.ts",
   "scripts": {
     "start": "cross-env NODE_ENV=development nodemon index.ts",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "caprover:setup": "node ./caprover/setup.js",
+    "caprover:deploy": "node ./caprover/deploy.js"
   },
   "nodemonConfig": {
     "ignore": [
@@ -17,7 +19,7 @@
     "@tensorflow/tfjs": "^3.13.0",
     "@tensorflow/tfjs-node": "^3.13.0",
     "axios": "^0.21.1",
-    "dotenv": "^8.2.0",
+    "dotenv": "^8.6.0",
     "express": "^4.17.1",
     "handy-redis": "^2.2.1",
     "http-errors": "^1.8.0",

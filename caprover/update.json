@@ -1,0 +1,28 @@
+{
+    "appName": "learning-api",
+    "instanceCount": 1,
+    "notExposeAsWebApp": true,
+    "forceSsl": true,
+    "envVars": [
+        {
+            "key": "CODA_LEARNING_API_REDIS_HOST",
+            "value": "$CODA_LEARNING_API_REDIS_HOST"
+        },
+        {
+            "key": "CODA_LEARNING_API_REDIS_PASSWORD",
+            "value": "$CODA_LEARNING_API_REDIS_PASSWORD"
+        },
+        {
+            "key": "CODA_LEARNING_API_REDIS_PORT",
+            "value": "$CODA_LEARNING_API_REDIS_PORT"
+        },
+        {
+            "key": "CODA_LEARNING_API_AIDBOX_URL",
+            "value": "$CODA_LEARNING_API_AIDBOX_URL"
+        },
+        {
+            "key": "CODA_LEARNING_API_PORT",
+            "value": "$CODA_LEARNING_API_PORT"
+        }
+    ]
+}
