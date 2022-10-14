@@ -1,4 +1,4 @@
 {
     "appName": "learning-api",
-    "hasPersistentData": true
+    "hasPersistentData": false
 }

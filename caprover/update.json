@@ -23,6 +23,14 @@
         {
             "key": "CODA_LEARNING_API_PORT",
             "value": "$CODA_LEARNING_API_PORT"
+        },
+        {
+            "key": "CODA_LEARNING_API_CLIENT_ID",
+            "value": "$CODA_LEARNING_API_CLIENT_ID"
+        },
+        {
+            "key": "CODA_LEARNING_API_CLIENT_SECRET",
+            "value": "$CODA_LEARNING_API_CLIENT_SECRET"
         }
     ]
 }
