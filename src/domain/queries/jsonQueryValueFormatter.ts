@@ -6,22 +6,21 @@ function formatValueForSql(filter: Filter, fieldInfo: FieldInfo) {
 
     const filterOperator = filter.operator.replace(/_/g, '').toLowerCase();
     if(String(value).toLowerCase() === 'null' && ['is', 'equals', 'on', 'equal'].some(op => op === filterOperator)) return value;
-
-    const fieldType = fieldInfo.type;
+    const fieldType = fieldInfo.type.toLowerCase();
 
     switch (fieldType) {
-        case 'TEXT':
+        case 'text':
             return `'${value}'`;
-        case 'BOOLEAN':
-            return `'${value}'`;
-        case 'FLOAT': // For some reason numbers are managed this way for json
+        case 'boolean':
+            return `${value}`;
+        case 'float':
             return `${value}`;
         default:
             return `'${value}'`;
     }
 }
 
-function formatIndexValueForSql(value: string, path: string){
+function formatIndexValueForSql(value: string | boolean | number, path: string){
     const pathArray = path.split(".");
     const lastPath = pathArray[pathArray.length -1]
     return `'[{"${lastPath}":"${value}"}]'`

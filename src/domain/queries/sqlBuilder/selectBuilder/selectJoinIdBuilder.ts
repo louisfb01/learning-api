@@ -1,9 +1,8 @@
 import Selector from "../../../../models/request/selector";
 import joinIdSelectors from "../../../joinIdSelectors";
-import queryStringEscaper from "../../queryStringEscaper";
 
-function build(selector: Selector, joinSelector: Selector) {
-    const joinIdSelector = joinIdSelectors.get(selector, joinSelector);
+function build(joinSelector: Selector) {
+    const joinIdSelector = joinIdSelectors.get(joinSelector);
     return joinIdSelector?.selectInJoinId ?? '';
 }
 

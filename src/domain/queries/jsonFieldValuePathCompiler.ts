@@ -1,3 +1,4 @@
+import calculatedFields from "../calculatedFields";
 import resourceArrayFields from "../resourceArrayFields";
 import FieldPathDecomposed from "./fieldPathDecomposed";
 import indexArrayFieldDetector from "./fields/indexArrayFieldDetector";
@@ -30,6 +31,10 @@ function getFieldPathCompiled(fieldPathEscaped: string): string {
 function getPathCompiled(path: string, selectorLabel?: string): string {
     const fieldPathEscaped = queryStringEscaper.escape(path);
     const isIndexArrayField = indexArrayFieldDetector.isIndexArrayField(fieldPathEscaped)
+    const calculatedField = calculatedFields.calculatedFields.get(fieldPathEscaped);
+    if (calculatedField) {
+        return `${calculatedField}`;
+    }
     if(isIndexArrayField && selectorLabel){
         return getIndexPathCompiled(path, selectorLabel)
     }

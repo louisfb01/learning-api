@@ -2,9 +2,9 @@ import Filter from "../../models/request/filter";
 
 function formatOperatorForSql(filter: Filter) {
     const filterOperator = filter.operator.replace(/_/g, '').toLowerCase();
-    
+    const value = String(filter.value)
     if (['is', 'equals', 'on', 'equal'].some(op => op === filterOperator)) {
-        if(filter.value.toLowerCase() === 'null') {
+        if(value.toLowerCase() === 'null') {
             return 'is';
         }
 
@@ -12,7 +12,7 @@ function formatOperatorForSql(filter: Filter) {
     }
 
     if (['not', 'isnot', 'notequals', 'noton', 'not_equal', 'notequal'].some(op => op === filterOperator)) {
-        if(filter.value.toLowerCase() === 'null') {
+        if(value.toLowerCase() === 'null') {
             return 'is not';
         }
 

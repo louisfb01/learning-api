@@ -26,8 +26,8 @@ async function executeQuery(query: string): Promise<any> {
     }
     catch (error: any) {
         if (axios.isAxiosError(error) && error.response)
-            error.message = JSON.stringify(error.response.data)
-        return error
+            error.message = JSON.stringify({query:query, error:error.response.data})
+        throw error
     }
 }
 

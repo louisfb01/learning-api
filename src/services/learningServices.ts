@@ -13,7 +13,7 @@ import EvaluateRequestBody from "../models/request/evaluateRequestBody";
 import evaluateResponseProcessor from "../domain/calculation/evaluate/evaluateResponseProcessor"
 
 async function getFieldTypeAndErrors(prepareRequest: PrepareRequestBody, filterFieldsNoErrors: Map<Filter, FieldInfo>) {
-    const fields = await fieldsRepository.getFieldsDataFromRequest(prepareRequest.selectors[0], filterFieldsNoErrors); //we are assuming there's only one selector
+    const fields = await fieldsRepository.getFieldsDataFromRequest(prepareRequest, filterFieldsNoErrors);
 
     const fieldRequestErrors = new Array<PrepareResponse>();
     fields.forEach((value, key) => {

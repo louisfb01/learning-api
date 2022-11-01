@@ -6,10 +6,22 @@ import Filter from "../../models/request/filter";
 import Selector from "../../models/request/selector";
 import PrepareRequestBody from "../../models/request/prepareRequestBody";
 
+const computedFields = new Map<string, string>();
+
+computedFields.set('string', 'TEXT'); //set(jsonb_type, pg_type)
+computedFields.set('number', 'FLOAT');
+computedFields.set('integer', 'FLOAT');
+computedFields.set('double precision', 'FLOAT');
+computedFields.set('boolean', 'BOOLEAN');
+computedFields.set('dateTime', 'DATE');
+
 function setFilterFieldTypes(filters: Filter[], response: any[], fieldsAndFieldReponses: Map<Filter, FieldInfo | Error>) {
     for (let filter of filters) {
         const fieldPathNormalized = fieldPathFormatter.formatPath(filter.path);
-        const fieldType = response.map(r => r[fieldPathNormalized]).filter(v => v != null);
+        let fieldType = response.map(r => r[fieldPathNormalized]).filter(v => v != null)[0] as string;
+        const computedField = computedFields.get(fieldType)
+        if (computedField)
+            fieldType = computedField
 
         const fieldInfo: FieldInfo = {
             name: filter.path,
@@ -23,11 +35,25 @@ function setFilterFieldTypes(filters: Filter[], response: any[], fieldsAndFieldR
 async function getSelectorFieldInfos(selector: Selector, filterType: Map<Filter, FieldInfo | Error>) {
     try {
         if (selector.filters.length > 0) {
+            var filterTypesInSelector: boolean = true;
+            selector.filters.filter(filter => {
+                if (!filter.type)
+                    filterTypesInSelector = false
+            })
 
-            const query = getFilterFieldTypesQuery.getQuery(selector);
-            const selectorFieldTypes = await aidboxProxy.executeQuery(query);
-
-            setFilterFieldTypes(selector.filters, selectorFieldTypes, filterType);
+            if (filterTypesInSelector) {
+                var selectorFilterTypes: any[] = [];
+                selector.filters.forEach(filter => {
+                    const fieldPathNormalized = fieldPathFormatter.formatPath(filter.path);
+                    selectorFilterTypes.push({ [fieldPathNormalized]: filter.type })
+                })
+                setFilterFieldTypes(selector.filters, selectorFilterTypes, filterType);
+            }
+            else {
+                const query = getFilterFieldTypesQuery.getQuery(selector);
+                const selectorFilterTypes = await aidboxProxy.executeQuery(query);
+                setFilterFieldTypes(selector.filters, selectorFilterTypes, filterType);
+            }
         }
 
         const joinSelector = selector.joins;
@@ -35,9 +61,9 @@ async function getSelectorFieldInfos(selector: Selector, filterType: Map<Filter,
 
         await getSelectorFieldInfos(joinSelector, filterType);
     }
-    catch (error:any) {
+    catch (error) {
         for (let filter of selector.filters) {
-            filterType.set(filter, error);
+            filterType.set(filter, error as any);
         }
     }
 }

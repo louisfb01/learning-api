@@ -40,8 +40,9 @@ export default class FromSqlBuilder {
         return this;
     }
 
-    possibleJoin() {
-        this.sqlBuilder.requestBuilders.push(fromPossibleJoinBuilder.build);
+    possibleJoin(fieldTypes: Map<Field, FieldInfo>) {
+        const builderFunction = (selector: Selector, filterTypes: Map<Filter, FieldInfo>) => fromPossibleJoinBuilder.build(selector, filterTypes, fieldTypes);
+        this.sqlBuilder.requestBuilders.push(builderFunction);
         return this;
     }
 

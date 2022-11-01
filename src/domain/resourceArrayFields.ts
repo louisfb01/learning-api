@@ -27,6 +27,12 @@ const values = [
     "medication.CodeableConcept.coding",
     "contained.code.coding",
 
+    /*imagingStudy*/
+    "procedureCode",
+    "procedureCode.coding",
+    "series",
+    "modality",
+
 ]
 
 export default {

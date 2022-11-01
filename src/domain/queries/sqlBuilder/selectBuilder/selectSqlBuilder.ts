@@ -34,8 +34,8 @@ export default class SelectSqlBuilder {
         return this;
     }
 
-    joinId(parentSelector: Selector) {
-        const builderFunction = (selector: Selector) => selectJoinIdBuilder.build(parentSelector, selector);
+    joinId() {
+        const builderFunction = (selector: Selector) => selectJoinIdBuilder.build(selector);
 
         this.sqlBuilder.requestBuilders.push(builderFunction);
         return this;

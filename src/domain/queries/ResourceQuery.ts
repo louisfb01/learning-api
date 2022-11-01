@@ -15,13 +15,13 @@ function getQuery(selector: Selector,
         .from()
         .resourceTable();
 
-    if (selector.filters.length === 0) return sqlBuilder.possibleJoin().limit().build(selector, filterTypes);
+    if (selector.filters.length === 0) return sqlBuilder.possibleJoin(fieldTypes).limit().build(selector, filterTypes);
 
     const hasArrayFilters = selector.filters.some(f => arrayFieldDetector.isArrayField(f.path));
 
     const builderWithFilter = hasArrayFilters
-        ? sqlBuilder.crossJoinForArrayFilters().possibleJoin().where().fieldFilter().limit()
-        : sqlBuilder.possibleJoin().where().fieldFilter().limit();
+        ? sqlBuilder.crossJoinForArrayFilters().possibleJoin(fieldTypes).where().fieldFilter().limit()
+        : sqlBuilder.possibleJoin(fieldTypes).where().fieldFilter().limit();
     return builderWithFilter.build(selector, filterTypes);
 }
 
