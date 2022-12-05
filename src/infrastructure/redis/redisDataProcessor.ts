@@ -1,21 +1,25 @@
-import { createNodeRedisClient } from 'handy-redis';
+import { createClient } from 'redis';
 var crypto = require('crypto')
 
+const USERNAME = process.env.CODA_LEARNING_API_REDIS_USERNAME ? process.env.CODA_LEARNING_API_REDIS_USERNAME : ''
 const PASSWORD = process.env.CODA_LEARNING_API_REDIS_PASSWORD ? process.env.CODA_LEARNING_API_REDIS_PASSWORD : ''
 const HOST = process.env.CODA_LEARNING_API_REDIS_HOST ? process.env.CODA_LEARNING_API_REDIS_HOST : 'localhost'
 const PORT = Number(String(process.env.CODA_LEARNING_API_REDIS_PORT)) ? Number(String(process.env.CODA_LEARNING_API_REDIS_PORT)) : 6379
-const client = createNodeRedisClient({ host: HOST, port: PORT, password: PASSWORD });
+const client = USERNAME ? createClient({ url: `redis://${USERNAME}:${PASSWORD}@${HOST}:${PORT}` }) : createClient();
+client.connect();
 
 async function setRedisKey(result: any) {
 
     const redisKey = generateToken();
     console.log(redisKey);
-    await client.setex(redisKey, 60 * 60 * 24, JSON.stringify(result)); //set key expiry to 24h
+    console.log(result)
+    console.log("isString",typeof result === 'string')
+    await client.setEx(redisKey, 60 * 60 * 24, result); //set key expiry to 24h
     return redisKey;
 }
 
 async function setRedisJobId(result: any, jobID: string) {
-    await client.setex(jobID, 60 * 60 * 24, JSON.stringify(result))
+    await client.setEx(jobID, 60 * 60 * 24, result)
     return jobID;
 }
 

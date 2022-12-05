@@ -4,7 +4,7 @@ import EvaluateResponse from "../../../models/response/evaluateResponse";
 
 const tf = require('@tensorflow/tfjs-node');
 
-async function getEvaluateResponse(jobID: string, weights: any): Promise<EvaluateResponse> {
+async function getEvaluateResponse(jobID: string, hubWeights: any): Promise<EvaluateResponse> {
     let redisKeys: any = await Redis.getRedisKey(jobID);
 
     redisKeys = await JSON.parse(redisKeys);
@@ -12,10 +12,12 @@ async function getEvaluateResponse(jobID: string, weights: any): Promise<Evaluat
     const datasetRedisKey = redisKeys.datasetRedisKey;
     const optionsRedisKey = redisKeys.optionsRedisKey;
     const modelRedisKey = redisKeys.modelRedisKey;
+    const weightsRedisKey = redisKeys.weightsRedisKey;
 
     const datasetStr = await Redis.getRedisKey(datasetRedisKey);
     const optionsStr = await Redis.getRedisKey(optionsRedisKey);
     const modelStr = await Redis.getRedisKey(modelRedisKey);
+    const weights = hubWeights? hubWeights : await Redis.getRedisKey(weightsRedisKey);
 
     const options = await JSON.parse(optionsStr);
     const datasetJson = await JSON.parse(datasetStr);
@@ -39,7 +41,7 @@ async function getEvaluateResponse(jobID: string, weights: any): Promise<Evaluat
 
      
     //training model
-    const EvaluateModel = await MLPRegressionModel.deserialize(modelJson);
+    const EvaluateModel = await MLPRegressionModel.deserialize(modelJson, weights);
     const learningRate = options.optimizer.parameters.learning_rate;
     const optimizer = options.optimizer.name;
     const loss = options.compiler.parameters.loss;
