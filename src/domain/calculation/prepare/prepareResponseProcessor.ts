@@ -11,45 +11,43 @@ import dicomUIDFields from "../../resourceDicomUIDFields";
 import dicomProxy from "../../../infrastructure/dicom/dicomProxy";
 import redisDataProcessor from "../../../infrastructure/redis/redisDataProcessor";
 import oneHotEncodedFields from "../../oneHotEncodedFields";
-import fieldPathFormatter from "../../queries/fieldPathFormatter";
 import MultiInputClassificationModel from "../model/MultiInputClassificationModel";
 const tf = require('@tensorflow/tfjs-node');
 
-async function getPrepareResponse(selector: Selector, 
-    options: Options, 
-    queryDataResults: QueryDataResults, 
-    jobID: string, 
+async function getPrepareResponse(selector: Selector,
+    options: Options,
+    queryDataResults: QueryDataResults,
+    jobID: string,
     fieldTypes: Map<Field, FieldInfo>): Promise<PrepareResponse> {
 
     const queryAndResult = queryDataResults.getSelectorResult(selector);
 
     if (queryAndResult.result instanceof Error) {
-        return {job: jobID, error: queryAndResult.result.message, query: queryAndResult.query };
+        return { job: jobID, error: queryAndResult.result.message, query: queryAndResult.query };
     }
 
     var inputs = options.inputs;
     const outputs = options.outputs;
     const result = queryAndResult.result;
 
-    fieldTypes = dicomUIDFieldTypes(selector, fieldTypes);
+    dicomUIDFieldTypes(selector, fieldTypes);
     const encodedDataset = await encodeDataset(result, fieldTypes, jobID, inputs, outputs);
     var dataset = minMaxScaleContinuous(encodedDataset, fieldTypes);
     dataset = createDataset(encodedDataset, inputs, outputs);
-    const imagingUIDinfo = setUIDInfo(selector, options, dataset);
 
-    console.log(dataset)
+    await setUIDInfo(selector, options, dataset)
+    const imagingUIDinfo = dataset.imageUIDlabel;
 
-    if(imagingUIDinfo){
+    if (imagingUIDinfo) {
         var TrainingModel = await MultiInputClassificationModel.createMultiInputClassificationModel([--inputs.length])
     }
-    else{
+    else {
         var TrainingModel = await MLPRegressionModel.createMLPRegressionModel([inputs.length]);
     }
 
     const modelJson = await MLPRegressionModel.serialize(TrainingModel);
     const weights = await MLPRegressionModel.saveWeights(TrainingModel);
-    console.log("typeof weights",typeof weights)
-    
+
     const response = {
         datasetRedisKey: await Redis.setRedisKey(JSON.stringify(dataset)),
         optionsRedisKey: await Redis.setRedisKey(JSON.stringify(options)),
@@ -67,71 +65,71 @@ async function getPrepareResponse(selector: Selector,
     return redisResult;
 }
 
-async function encodeDataset(dataset: any, fieldTypes: Map<Field, FieldInfo>, jobID: string, inputs: string[], outputs: string[]){
+async function encodeDataset(dataset: any, fieldTypes: Map<Field, FieldInfo>, jobID: string, inputs: string[], outputs: string[]) {
     const fieldsInfo = Array.from(fieldTypes.values());
     const fields = Array.from(fieldTypes.keys());
-    const encodedDataset = await Promise.all(dataset.map( async (obj: any) => {
-            for(let i = 0; i<fieldsInfo.length; i++){
-                let fieldName = fieldsInfo[i].name;
-                let fieldType = fieldsInfo[i].type;
-                let fieldPath = fields[i].path;
-                let encodedFieldIndex = oneHotEncodedFields.values.findIndex(encodedField => encodedField.path == fieldPath);
+    const encodedDataset = await Promise.all(dataset.map(async (obj: any) => {
+        for (let i = 0; i < fieldsInfo.length; i++) {
+            let fieldName = fieldsInfo[i].name;
+            let fieldType = fieldsInfo[i].type;
+            let fieldPath = fields[i].path;
+            let encodedFieldIndex = oneHotEncodedFields.values.findIndex(encodedField => encodedField.path == fieldPath);
 
-                if(encodedFieldIndex > -1){
-                    const categories = oneHotEncodedFields.values[encodedFieldIndex].categories;
-                    categories.forEach(element => {
-                        const newFieldName = `${fieldName}_${element}`;
-                        obj[newFieldName] = obj[fieldName]==element ? 1 : 0;
-                        addEncodedFieldsToInputOutput(inputs, outputs, newFieldName, fieldName);
-                    });
-                    delete obj[fieldName];
-                    removeEncodedFieldFromInputOutput(inputs, outputs, fieldName);
-                    
-                }
-                else{
-                    switch(fieldType){
-                        case "TEXT":
-                            obj[fieldName] = encodeString(obj[fieldName]);
-                            break;
-                        case "BOOLEAN":
-                            obj[fieldName] = encodeBoolean(obj[fieldName]);
-                            break;
-                        case "DATE":
-                            obj[fieldName] = encodeDate(obj[fieldName]);
-                            break;
-                        case "dicomSeriesUID":
-                            obj[fieldName] = await encodeUID(obj[fieldName], jobID);
-                            break;
-                    }
+            if (encodedFieldIndex > -1) {
+                const categories = oneHotEncodedFields.values[encodedFieldIndex].categories;
+                categories.forEach(element => {
+                    const newFieldName = `${fieldName}_${element}`;
+                    obj[newFieldName] = obj[fieldName] == element ? 1 : 0;
+                    addEncodedFieldsToInputOutput(inputs, outputs, newFieldName, fieldName);
+                });
+                delete obj[fieldName];
+                removeEncodedFieldFromInputOutput(inputs, outputs, fieldName);
+
+            }
+            else {
+                switch (fieldType) {
+                    case "TEXT":
+                        obj[fieldName] = encodeString(obj[fieldName]);
+                        break;
+                    case "BOOLEAN":
+                        obj[fieldName] = encodeBoolean(obj[fieldName]);
+                        break;
+                    case "DATE":
+                        obj[fieldName] = encodeDate(obj[fieldName]);
+                        break;
+                    case "dicomSeriesUID":
+                        obj[fieldName] = await encodeUID(obj[fieldName], jobID);
+                        break;
                 }
             }
-        }));
+        }
+    }));
     return dataset;
 }
 
-function createDataset(dataset: any, inputs: string[], outputs: string[]){
+function createDataset(dataset: any, inputs: string[], outputs: string[]) {
     let inputArray: any[] = [];
     let outputArray: any[] = [];
     inputs = inputs.map(label => {
         return fieldLabelFormatter.formatLabel(label)
-        
+
     });
     outputs = outputs.map(label => {
         return fieldLabelFormatter.formatLabel(label)
     });
 
     loop: //use label to break/continue out of nested loop
-    for(let obj of dataset) {
-        let inputObj:any= {};
-        let outputObj:any = {};
-        for(let input of inputs){
-            if(obj[input]==null){//clean out invalid data
+    for (let obj of dataset) {
+        let inputObj: any = {};
+        let outputObj: any = {};
+        for (let input of inputs) {
+            if (obj[input] == null) {//clean out invalid data
                 continue loop
             }
             inputObj[input] = obj[input]
         }
-        for(let output of outputs){
-            if(obj[output]==null){
+        for (let output of outputs) {
+            if (obj[output] == null) {
                 continue loop
             }
             outputObj[output] = obj[output]
@@ -140,27 +138,25 @@ function createDataset(dataset: any, inputs: string[], outputs: string[]){
         inputArray.push(inputObj);
         outputArray.push(outputObj);
     };
-    return {xs: inputArray, ys: outputArray};
+    return { xs: inputArray, ys: outputArray };
 }
 
-function setUIDInfo(selector: Selector, options: Options, dataset: any):any {
+async function setUIDInfo(selector: Selector, options: Options, dataset: any) {
     selector.fields.forEach(f => {
         const isUIDPathElement = dicomUIDFields.values.some(v => v === f.path);
-        if(isUIDPathElement){
-            Object.assign(dataset, {imageUIDlabel: f.label})
-            return {imageUIDlabel: f.label}
+        if (isUIDPathElement) {
+            Object.assign(dataset, { imageUIDlabel: f.label })
         }
-        
     })
-    if(selector.joins){
-        return setUIDInfo(selector.joins, options, dataset);
+    if (selector.joins) {
+        setUIDInfo(selector.joins, options, dataset);
     }
 }
 
-function dicomUIDFieldTypes(selector: Selector, fieldTypes: Map<Field, FieldInfo>): Map<Field, FieldInfo>{
+function dicomUIDFieldTypes(selector: Selector, fieldTypes: Map<Field, FieldInfo>) {
     selector.fields.forEach(f => {
         const isUIDPathElement = dicomUIDFields.values.some(v => v === f.path);
-        if(isUIDPathElement){
+        if (isUIDPathElement) {
             const fieldLabelNormalized = fieldLabelFormatter.formatLabel(f.label);
             const fieldInfo: FieldInfo = {
                 name: fieldLabelNormalized,
@@ -169,25 +165,24 @@ function dicomUIDFieldTypes(selector: Selector, fieldTypes: Map<Field, FieldInfo
             fieldTypes.set(f, fieldInfo);
         }
     })
-    if(selector.joins){
-        fieldTypes = dicomUIDFieldTypes(selector.joins, fieldTypes)
+    if (selector.joins) {
+        dicomUIDFieldTypes(selector.joins, fieldTypes)
     }
-    return fieldTypes
 }
 
-function encodeDate(value: string){
+function encodeDate(value: string) {
     return new Date(value).getTime();
 }
 
-function encodeString(value: string){
+function encodeString(value: string) {
     return hashCode(value);
 }
 
-function encodeBoolean(value: boolean){
+function encodeBoolean(value: boolean) {
     return value ? 1 : 0;
 }
 
-async function encodeUID(dicomSeriesUID: string, jobID: string){
+async function encodeUID(dicomSeriesUID: string, jobID: string) {
 
     const formattedSeriesUID = dicomSeriesUID.replace(/['"]+/g, '')
     const seriesMetadata = await dicomProxy.getStudyUID(formattedSeriesUID);
@@ -202,24 +197,24 @@ async function encodeUID(dicomSeriesUID: string, jobID: string){
     return redisKey;
 }
 
-async function mockEncodeUID(dicomSeriesUID: string, jobID: string){
+async function mockEncodeUID(dicomSeriesUID: string, jobID: string) {
     dicomSeriesUID = "1.2.840.113619.2.176.2025.1499492.7391.1171285944.393" //temp
-    var instanceUID = "1.3.6.1.4.1.14519.5.2.1.2193.7172.863063138942128758032875897774" 
-    while( instanceUID == "1.3.6.1.4.1.14519.5.2.1.2193.7172.863063138942128758032875897774" || instanceUID == "1.3.6.1.4.1.14519.5.2.1.2193.7172.227588763982019545194084732872"){
-    const studies = await dicomProxy.getAllStudies();
-    const studiesURL = studies.map((s:any) => {
-        return s["0020000D"]["Value"][0];
-    })
-    const studyURL = studiesURL[Math.floor(Math.random() * studiesURL.length)]
-    const series = await dicomProxy.getAllSeries(studyURL);
-    const seriesURL = series.map((s:any) => {
-        return s["0020000E"]["Value"][0];
-    })
-    dicomSeriesUID = seriesURL[Math.floor(Math.random() * seriesURL.length)];
-    const seriesMetadata = await dicomProxy.getStudyUID(dicomSeriesUID);
-    const studyUID = seriesMetadata[0][`0020000D`].Value[0];
-    const instances = await dicomProxy.getInstanceUID(dicomSeriesUID, studyUID);
-    instanceUID = instances[Math.floor(Math.random() * instances.length)][`00080018`].Value[0] //temp
+    var instanceUID = "1.3.6.1.4.1.14519.5.2.1.2193.7172.863063138942128758032875897774"
+    while (instanceUID == "1.3.6.1.4.1.14519.5.2.1.2193.7172.863063138942128758032875897774" || instanceUID == "1.3.6.1.4.1.14519.5.2.1.2193.7172.227588763982019545194084732872") {
+        const studies = await dicomProxy.getAllStudies();
+        const studiesURL = studies.map((s: any) => {
+            return s["0020000D"]["Value"][0];
+        })
+        const studyURL = studiesURL[Math.floor(Math.random() * studiesURL.length)]
+        const series = await dicomProxy.getAllSeries(studyURL);
+        const seriesURL = series.map((s: any) => {
+            return s["0020000E"]["Value"][0];
+        })
+        dicomSeriesUID = seriesURL[Math.floor(Math.random() * seriesURL.length)];
+        const seriesMetadata = await dicomProxy.getStudyUID(dicomSeriesUID);
+        const studyUID = seriesMetadata[0][`0020000D`].Value[0];
+        const instances = await dicomProxy.getInstanceUID(dicomSeriesUID, studyUID);
+        instanceUID = instances[Math.floor(Math.random() * instances.length)][`00080018`].Value[0] //temp
     }
     const imgData = await dicomProxy.getInstanceFrame(instanceUID);
 
@@ -233,45 +228,45 @@ async function mockEncodeUID(dicomSeriesUID: string, jobID: string){
 //balance output categories
 
 function hashCode(value: string) {
-    let h=0;
-    for(let i = 0; i < value.length; i++) 
-          h = Math.imul(31, h) + value.charCodeAt(i) | 0;
+    let h = 0;
+    for (let i = 0; i < value.length; i++)
+        h = Math.imul(31, h) + value.charCodeAt(i) | 0;
 
     return h;
 }
 
-function addEncodedFieldsToInputOutput(inputs: string[], outputs: string[], newFieldName: string, oldFieldName: string){
+function addEncodedFieldsToInputOutput(inputs: string[], outputs: string[], newFieldName: string, oldFieldName: string) {
     let inputIndex = inputs.findIndex(e => e == oldFieldName)
     let outputIndex = outputs.findIndex(e => e == oldFieldName)
-    if(inputIndex >= 0){
+    if (inputIndex >= 0) {
         inputs.push(newFieldName);
     }
-    else if(outputIndex >= 0){
+    else if (outputIndex >= 0) {
         outputs.push(newFieldName);
     }
     return
 }
 
-function removeEncodedFieldFromInputOutput(inputs: string[], outputs: string[], oldFieldName: string){
+function removeEncodedFieldFromInputOutput(inputs: string[], outputs: string[], oldFieldName: string) {
     let inputIndex = inputs.findIndex(e => e == oldFieldName)
     let outputIndex = outputs.findIndex(e => e == oldFieldName)
-    if(inputIndex >= 0){
+    if (inputIndex >= 0) {
         inputs.splice(inputIndex, 1);
     }
-    else if(outputIndex >= 0){
+    else if (outputIndex >= 0) {
         outputs.splice(outputIndex, 1);
     }
     return
 }
 
-function minMaxScaleContinuous(dataset:any, fieldTypes: Map<Field, FieldInfo>){
+function minMaxScaleContinuous(dataset: any, fieldTypes: Map<Field, FieldInfo>) {
     const fields = Array.from(fieldTypes.values()).filter(f => f.type == "FLOAT")
-// X_std = (X - X.min) / (X.max - X.min)
-// X_scaled = X_std * (max - min) + min -> use if min max of scale is not 0,1
+    // X_std = (X - X.min) / (X.max - X.min)
+    // X_scaled = X_std * (max - min) + min -> use if min max of scale is not 0,1
     fields.forEach(field => {
-        let xMin = Math.min(...dataset.map((d: any ) => d[field.name]));
-        let xMax = Math.max(...dataset.map((d: any ) => d[field.name]));
-        dataset = dataset.map((data:any) => {
+        let xMin = Math.min(...dataset.map((d: any) => d[field.name]));
+        let xMax = Math.max(...dataset.map((d: any) => d[field.name]));
+        dataset = dataset.map((data: any) => {
             let x = data[field.name];
             let xStd = (x - xMin) / (xMax - xMin);
             data[field.name] = xStd;
@@ -281,35 +276,35 @@ function minMaxScaleContinuous(dataset:any, fieldTypes: Map<Field, FieldInfo>){
     return dataset
 }
 
-async function createModel(dataset:any){
+async function createModel(dataset: any) {
     const width = 512
     const height = 512
     const depth = 1;
 
     const mlpInputShape = Object.keys(dataset.xs[0]).length - 1
     //let mlpModel = await MLPRegressionModel.createMLPRegressionModel([mlpInputShape]);
-    
-    const myInput1 = tf.input({shape: [mlpInputShape], name: 'myInput1'});
-    const myInput1Dense1 = tf.layers.dense({units: 20, activation:'relu', name: 'myInput1Dense1'}).apply(myInput1);
-    const myInput1Dense2 = tf.layers.dense({units: 20, activation:'relu', name: 'myInput1Dense2'}).apply(myInput1Dense1);
-    const output1 = tf.layers.dense({units: 5, activation:'relu', name: 'output1'}).apply(myInput1Dense2)
 
-    const myInput2 = tf.input({shape: [width, height, depth], name: 'myInput2'});
-    const conv2d_1 = tf.layers.conv2d({filters: 64, kernelSize: 3, activation:'relu', name: 'conv2d_1'}).apply(myInput2);
+    const myInput1 = tf.input({ shape: [mlpInputShape], name: 'myInput1' });
+    const myInput1Dense1 = tf.layers.dense({ units: 20, activation: 'relu', name: 'myInput1Dense1' }).apply(myInput1);
+    const myInput1Dense2 = tf.layers.dense({ units: 20, activation: 'relu', name: 'myInput1Dense2' }).apply(myInput1Dense1);
+    const output1 = tf.layers.dense({ units: 5, activation: 'relu', name: 'output1' }).apply(myInput1Dense2)
+
+    const myInput2 = tf.input({ shape: [width, height, depth], name: 'myInput2' });
+    const conv2d_1 = tf.layers.conv2d({ filters: 64, kernelSize: 3, activation: 'relu', name: 'conv2d_1' }).apply(myInput2);
     const conv2d_1_bn = tf.layers.batchNormalization().apply(conv2d_1);
-    const conv2d_1_bn_pooled = tf.layers.maxPooling2d({poolSize: [2,2]}).apply(conv2d_1_bn);
+    const conv2d_1_bn_pooled = tf.layers.maxPooling2d({ poolSize: [2, 2] }).apply(conv2d_1_bn);
     // const conv2d_2  = tf.layers.conv2d({filters: 32, kernelSize: 3, activation:'relu', name: 'conv2d_2 '}).apply(conv2d_1_bn_pooled);
     // const conv2d_2_bn = tf.layers.batchNormalization().apply(conv2d_2);
     // const conv2d_2_bn_pooled = tf.layers.maxPooling2d({poolSize: [2,2]}).apply(conv2d_2_bn);
     const flatten = tf.layers.flatten().apply(conv2d_1_bn_pooled);
-    const output2 = tf.layers.dense({units: 5, activation:'relu', name: 'output2'}).apply(flatten)
+    const output2 = tf.layers.dense({ units: 5, activation: 'relu', name: 'output2' }).apply(flatten)
     console.log(output1.shape)
     console.log(output2.shape)
-    
+
     const output = tf.layers.concatenate().apply([output1, output2]);
-    var model = tf.model({inputs: [myInput1, myInput2], outputs: output});
-    
-    await model.compile({optimizer: tf.train.adam(0.0005), loss: 'binaryCrossentropy'});
+    var model = tf.model({ inputs: [myInput1, myInput2], outputs: output });
+
+    await model.compile({ optimizer: tf.train.adam(0.0005), loss: 'binaryCrossentropy' });
     return model
 }
 

@@ -11,7 +11,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     let redisKeys: any = await Redis.getRedisKey(jobID);
 
     redisKeys = await JSON.parse(redisKeys);
-    
+
     const datasetRedisKey = redisKeys.datasetRedisKey;
     const optionsRedisKey = redisKeys.optionsRedisKey;
     const modelRedisKey = redisKeys.modelRedisKey;
@@ -20,7 +20,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const datasetStr = await Redis.getRedisKey(datasetRedisKey);
     const optionsStr = await Redis.getRedisKey(optionsRedisKey);
     const modelStr = await Redis.getRedisKey(modelRedisKey);
-    const weights = hubWeights? hubWeights : await Redis.getRedisKey(weightsRedisKey);
+    const weights = hubWeights ? hubWeights : await Redis.getRedisKey(weightsRedisKey);
 
     const options = await JSON.parse(optionsStr);
     var datasetJson = await JSON.parse(datasetStr);
@@ -28,34 +28,42 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const width = 512
     const height = 512
     const depth = 1;
-    const imageDataset = await fetchImages(datasetJson, width, height, depth);
+    const imageTensorArray = await fetchImages(datasetJson, width, height, depth);
 
-    const xs = await tf.data.array(datasetJson.xs);
-    const ys = await tf.data.array(datasetJson.ys);
     const flattenedLabelset = await
-        ys
-        .map((data:any) =>
-        {
-            return Object.values(data)
-        })
+        datasetJson.ys
+            .map((data: any) => {
+                return tf.tensor(Object.values(data))
+            })
     const flattenedFeatureset = await
-        xs
-        .map((data:any) =>
-        {
-            return Object.values(data)
-        })
-    const datasetObj = await tf.data.zip({xs: flattenedFeatureset, ys:flattenedLabelset});
-    await datasetObj.forEachAsync((e:any) => console.log(JSON.stringify(e)));
-    
-    //training model
-    let modelJson = await JSON.parse(modelStr);
+        datasetJson.xs
+            .map((data: any) => {
+                return tf.tensor(Object.values(data))
+            })
+
+    var xDataset = await tf.data.array(flattenedFeatureset);
+    var yDataset = await tf.data.array(flattenedLabelset);
+    //xDataset.forEachAsync((e:any) => console.log(JSON.stringify(e)))
+
+    if (imageTensorArray) {//multiInput model
+        const image = await tf.data.array(imageTensorArray);
+        xDataset = await tf.data.zip({ myInput1: xDataset, myInput2: image });
+        yDataset = await tf.data.zip({ concatenate_Concatenate1: yDataset });
+        var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
+    }
+    else {//MLP model
+        var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
+    }
+    //await datasetObj.forEachAsync((e:any) => console.log(JSON.stringify(e)));
+
+    const modelJson = await JSON.parse(modelStr);
     const TrainingModel = await MLPRegressionModel.deserialize(modelJson, weights);
 
     const learningRate = options.optimizer.parameters.learning_rate;
     const optimizer = options.optimizer.name;
     const loss = options.compiler.parameters.loss;
     const metrics = options.compiler.parameters.metrics;
-    await TrainingModel.compile({optimizer: tf.train[`${optimizer}`](learningRate), loss: loss, metrics: metrics});
+    await TrainingModel.compile({ optimizer: tf.train[`${optimizer}`](learningRate), loss: loss, metrics: metrics });
     const datasetLength = datasetJson.xs.length;
     const validationSplit = options.optimizer.parameters.validation_split;
     const evaluationSplit = options.optimizer.parameters.evaluation_split;
@@ -70,42 +78,45 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const validationDataset = dataset.skip(trainBatches);
 
     let history = await TrainingModel.fitDataset(
-        trainDataset, {epochs: epochs, validationData: validationDataset}
+        trainDataset,
+        { epochs: epochs, validationData: validationDataset }
     )
-    
-    
+
+
     const responseMetrics = {
-        acc: history.history.acc[epochs-1],
-        loss: history.history.loss[epochs-1],
-        val_acc: history.history.val_acc[epochs-1],
-        val_loss: history.history.val_loss[epochs-1],
+        acc: history.history.acc[epochs - 1],
+        loss: history.history.loss[epochs - 1],
+        val_acc: history.history.val_acc[epochs - 1],
+        val_loss: history.history.val_loss[epochs - 1],
     }
     //serialize to send weights as response
     const responseModel = await MLPRegressionModel.serialize(TrainingModel);
-    await Redis.setRedisJobId(responseModel, modelRedisKey)
+    const trainedWeights = await MLPRegressionModel.saveWeights(TrainingModel);
+    //await Redis.setRedisJobId(responseModel, modelRedisKey)
+    //await Redis.setRedisJobId(trainedWeights, weightsRedisKey)
 
     const trainResponse = {
         job: jobID,
-        weights: responseModel,
+        weights: trainedWeights,
         metrics: responseMetrics
     };
     return trainResponse
 }
 
-async function fetchImages(datasetJson:any, width:number, height:number, depth:number){
-    if(datasetJson.imageUIDlabel){
-    const label = fieldLabelFormatter.formatLabel(datasetJson.imageUIDlabel);
-        const imgDataset = await Promise.all(datasetJson.xs.map(async (obj:any) => {
+async function fetchImages(datasetJson: any, width: number, height: number, depth: number) {
+    if (datasetJson.imageUIDlabel) {
+        const label = fieldLabelFormatter.formatLabel(datasetJson.imageUIDlabel);
+        const imgDataset = await Promise.all(datasetJson.xs.map(async (obj: any) => {
             const imageRedisKey = obj[label];
             const ubase64Image = await redisDataProcessor.getRedisKey(imageRedisKey);
             const imageBuffer = new Uint8Array(Buffer.from(ubase64Image, 'base64'));
             var result = await tf.node.decodeImage(imageBuffer);
-            result = await tf.image.resizeNearestNeighbor(result, [width,height]);
+            result = await tf.image.resizeNearestNeighbor(result, [width, height]);
             result = await ((tf.cast(result, 'float32').div(tf.scalar(255.0))));
             delete obj[label]
             return result;
         }));
-    return imgDataset;
+        return imgDataset;
     }
     return
 }

@@ -30,8 +30,6 @@ const tf = require('@tensorflow/tfjs-node');
   async function saveWeights(model:any){
     let result = await model.save(tf.io.withSaveHandler(async (modelArtifacts: any) => modelArtifacts));
     result.weightData = Buffer.from(result.weightData);
-    console.log("weightData",result.weightData)
-    console.log("isbuffer", Buffer.isBuffer(result.weightData))
     return result.weightData;
   }
 

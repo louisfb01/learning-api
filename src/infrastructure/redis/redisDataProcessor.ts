@@ -12,8 +12,6 @@ async function setRedisKey(result: any) {
 
     const redisKey = generateToken();
     console.log(redisKey);
-    console.log(result)
-    console.log("isString",typeof result === 'string')
     await client.setEx(redisKey, 60 * 60 * 24, result); //set key expiry to 24h
     return redisKey;
 }
