@@ -20,7 +20,7 @@ app.use(morgan('dev'));
 //app.disable('etag');
 
 // Middleware to process incoming data
-app.use(express.json());
+app.use(express.json({ limit: 1000000000}));
 app.use(express.urlencoded({ extended: false }));
 
 // All routes

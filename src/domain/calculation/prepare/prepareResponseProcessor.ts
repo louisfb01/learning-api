@@ -60,7 +60,7 @@ async function getPrepareResponse(selector: Selector,
         job: job,
         query: queryAndResult.query,
         count: dataset.xs.length,
-        totalCount: result.length
+        model: JSON.stringify(modelJson)
     }
     return redisResult;
 }
@@ -298,8 +298,6 @@ async function createModel(dataset: any) {
     // const conv2d_2_bn_pooled = tf.layers.maxPooling2d({poolSize: [2,2]}).apply(conv2d_2_bn);
     const flatten = tf.layers.flatten().apply(conv2d_1_bn_pooled);
     const output2 = tf.layers.dense({ units: 5, activation: 'relu', name: 'output2' }).apply(flatten)
-    console.log(output1.shape)
-    console.log(output2.shape)
 
     const output = tf.layers.concatenate().apply([output1, output2]);
     var model = tf.model({ inputs: [myInput1, myInput2], outputs: output });

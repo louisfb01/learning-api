@@ -36,26 +36,22 @@ const tf = require('@tensorflow/tfjs-node');
   async function serialize(model: any){
     let result = await model.save(tf.io.withSaveHandler(async (modelArtifacts: any) => modelArtifacts));
     delete result.weightData;
-    // result.weights = []
-    // for (let i = 0; i < model.getWeights().length; i++) {
-    //   result.weights.push(model.getWeights()[i].dataSync().toString());
-    // }
     return result;
   }
 
   async function deserialize(json: any, weights: any){
-      const weightData = new Uint8Array(Buffer.from(weights)).buffer;
-      const modelArtifacts = {
-        modelTopology: json.modelTopology, 
-        weightSpecs: json.weightSpecs, 
-        weightData: weightData}
-      let loadedModel = await tf.loadLayersModel(tf.io.fromMemory(modelArtifacts));
-      // let newWeights = []
-      // for (let i = 0; i < loadedModel.getWeights().length; i++) {
-      //   let weight = weightData[i].split(",")
-      //   newWeights.push(tf.tensor(new Float32Array(weight), json.weightSpecs[i].shape))
-      // }
-      // loadedModel.setWeights(newWeights);
+    if(!Buffer.isBuffer(weights)) {
+      var weightData = new Uint8Array(Buffer.from(weights)).buffer;
+    }
+    else{
+      var weightData = new Uint8Array(weights).buffer;
+    }
+    const modelArtifacts = {
+      modelTopology: json.modelTopology, 
+      weightSpecs: json.weightSpecs, 
+      weightData: weightData}
+    let loadedModel = await tf.loadLayersModel(tf.io.fromMemory(modelArtifacts));
+
       return loadedModel;
   }
 

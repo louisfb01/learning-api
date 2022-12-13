@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { commandOptions, createClient } from 'redis';
 var crypto = require('crypto')
 
 const USERNAME = process.env.CODA_LEARNING_API_REDIS_USERNAME ? process.env.CODA_LEARNING_API_REDIS_USERNAME : ''
@@ -11,7 +11,6 @@ client.connect();
 async function setRedisKey(result: any) {
 
     const redisKey = generateToken();
-    console.log(redisKey);
     await client.setEx(redisKey, 60 * 60 * 24, result); //set key expiry to 24h
     return redisKey;
 }
@@ -32,6 +31,19 @@ async function getRedisKey(key: string) {
     }
 }
 
+async function getBuffer(key:string) {
+    const dataset = await client.get(
+        commandOptions({ returnBuffers: true }),
+        key);
+    await client.expire(key, 60 * 60 * 24); //reset key expiry
+    if (dataset === null) {
+        return '{}';
+    }
+    else {
+        return dataset;
+    }
+}
+
 function generateToken() {
     return crypto.randomBytes(12).toString('base64');
 }
@@ -40,4 +52,5 @@ export default {
     setRedisKey,
     getRedisKey,
     setRedisJobId,
+    getBuffer,
 }

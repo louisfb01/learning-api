@@ -12,7 +12,7 @@ function errorHandler(err: any, req: any, res: any, next: any) {
     }
 
     const errorFormatted = { 
-        statsApiVersion: version.getBuildVersion(),
+        learningApiVersion: version.getBuildVersion(),
         stackTrace: (err).stack,
         //config: getConfigFormatted(err)
     }

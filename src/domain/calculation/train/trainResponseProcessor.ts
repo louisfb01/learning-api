@@ -9,9 +9,7 @@ const tf = require('@tensorflow/tfjs-node');
 async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainResponse> {
 
     let redisKeys: any = await Redis.getRedisKey(jobID);
-
     redisKeys = await JSON.parse(redisKeys);
-
     const datasetRedisKey = redisKeys.datasetRedisKey;
     const optionsRedisKey = redisKeys.optionsRedisKey;
     const modelRedisKey = redisKeys.modelRedisKey;
@@ -20,7 +18,7 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const datasetStr = await Redis.getRedisKey(datasetRedisKey);
     const optionsStr = await Redis.getRedisKey(optionsRedisKey);
     const modelStr = await Redis.getRedisKey(modelRedisKey);
-    const weights = hubWeights ? hubWeights : await Redis.getRedisKey(weightsRedisKey);
+    const weights = hubWeights ? hubWeights : await Redis.getBuffer(weightsRedisKey);
 
     const options = await JSON.parse(optionsStr);
     var datasetJson = await JSON.parse(datasetStr);
@@ -33,12 +31,12 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
     const flattenedLabelset = await
         datasetJson.ys
             .map((data: any) => {
-                return tf.tensor(Object.values(data))
+                return Object.values(data)
             })
     const flattenedFeatureset = await
         datasetJson.xs
             .map((data: any) => {
-                return tf.tensor(Object.values(data))
+                return Object.values(data)
             })
 
     var xDataset = await tf.data.array(flattenedFeatureset);
@@ -47,8 +45,8 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
 
     if (imageTensorArray) {//multiInput model
         const image = await tf.data.array(imageTensorArray);
-        xDataset = await tf.data.zip({ myInput1: xDataset, myInput2: image });
-        yDataset = await tf.data.zip({ concatenate_Concatenate1: yDataset });
+        xDataset = await tf.data.zip({ input1: xDataset, input2: image });
+        yDataset = await tf.data.zip({ output: yDataset });
         var datasetObj = await tf.data.zip({ xs: xDataset, ys: yDataset })
     }
     else {//MLP model
@@ -89,11 +87,8 @@ async function getTrainResponse(jobID: string, hubWeights: any): Promise<TrainRe
         val_acc: history.history.val_acc[epochs - 1],
         val_loss: history.history.val_loss[epochs - 1],
     }
-    //serialize to send weights as response
-    const responseModel = await MLPRegressionModel.serialize(TrainingModel);
+    //send weights as response
     const trainedWeights = await MLPRegressionModel.saveWeights(TrainingModel);
-    //await Redis.setRedisJobId(responseModel, modelRedisKey)
-    //await Redis.setRedisJobId(trainedWeights, weightsRedisKey)
 
     const trainResponse = {
         job: jobID,
