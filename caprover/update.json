@@ -13,6 +13,10 @@
             "value": "$CODA_FHIR_STORE_URL"
         },
         {
+            "key": "CODA_DICOM_STORE_URL",
+            "value": "$CODA_DICOM_STORE_URL"
+        },
+        {
             "key": "CODA_SITE_CACHE_DB_HOST",
             "value": "$CODA_SITE_CACHE_DB_HOST"
         },
