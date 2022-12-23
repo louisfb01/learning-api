@@ -11,8 +11,8 @@ const wado = axios.create({
 });
 
 const client = {
-    id: process.env.CODA_LEARNING_API_ORTHANC_CLIENT_ID,
-    secret: process.env.CODA_LEARNING_API_ORTHANC_CLIENT_SECRET
+    id: process.env.CODA_LEARNING_API_DICOM_STORE_CLIENT_ID,
+    secret: process.env.CODA_LEARNING_API_DICOM_STORE_CLIENT_SECRET
 }
 
 const authEncoded = Buffer.from(`${client.id}:${client.secret}`).toString('base64');
