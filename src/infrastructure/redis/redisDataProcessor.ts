@@ -1,11 +1,11 @@
 import { commandOptions, createClient } from 'redis';
 var crypto = require('crypto')
 
-const USERNAME = process.env.CODA_LEARNING_API_REDIS_USERNAME ? process.env.CODA_LEARNING_API_REDIS_USERNAME : ''
-const PASSWORD = process.env.CODA_LEARNING_API_REDIS_PASSWORD ? process.env.CODA_LEARNING_API_REDIS_PASSWORD : ''
-const HOST = process.env.CODA_LEARNING_API_REDIS_HOST ? process.env.CODA_LEARNING_API_REDIS_HOST : 'localhost'
-const PORT = Number(String(process.env.CODA_LEARNING_API_REDIS_PORT)) ? Number(String(process.env.CODA_LEARNING_API_REDIS_PORT)) : 6379
-const client = USERNAME ? createClient({ url: `redis://${USERNAME}:${PASSWORD}@${HOST}:${PORT}` }) : createClient();
+const USERNAME = ''
+const PASSWORD = process.env.CODA_SITE_CACHE_DB_PASSWORD ? process.env.CODA_SITE_CACHE_DB_PASSWORD : ''
+const HOST = process.env.CODA_SITE_CACHE_DB_HOST ? process.env.CODA_SITE_CACHE_DB_HOST : 'localhost'
+const PORT = Number(String(process.env.CODA_SITE_CACHE_DB_PORT)) ? Number(String(process.env.CODA_SITE_CACHE_DB_PORT)) : 6379
+const client = PASSWORD ? createClient({ url: `redis://${USERNAME}:${PASSWORD}@${HOST}:${PORT}` }) : createClient();
 client.connect();
 
 async function setRedisKey(result: any) {
@@ -31,7 +31,7 @@ async function getRedisKey(key: string) {
     }
 }
 
-async function getBuffer(key:string) {
+async function getBuffer(key: string) {
     const dataset = await client.get(
         commandOptions({ returnBuffers: true }),
         key);

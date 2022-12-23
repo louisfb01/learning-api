@@ -5,32 +5,32 @@
     "forceSsl": true,
     "envVars": [
         {
-            "key": "CODA_LEARNING_API_REDIS_HOST",
-            "value": "$CODA_LEARNING_API_REDIS_HOST"
-        },
-        {
-            "key": "CODA_LEARNING_API_REDIS_PASSWORD",
-            "value": "$CODA_LEARNING_API_REDIS_PASSWORD"
-        },
-        {
-            "key": "CODA_LEARNING_API_REDIS_PORT",
-            "value": "$CODA_LEARNING_API_REDIS_PORT"
-        },
-        {
-            "key": "CODA_LEARNING_API_AIDBOX_URL",
-            "value": "$CODA_LEARNING_API_AIDBOX_URL"
-        },
-        {
             "key": "CODA_LEARNING_API_PORT",
             "value": "$CODA_LEARNING_API_PORT"
         },
         {
-            "key": "CODA_LEARNING_API_CLIENT_ID",
-            "value": "$CODA_LEARNING_API_CLIENT_ID"
+            "key": "CODA_FHIR_STORE_URL",
+            "value": "$CODA_FHIR_STORE_URL"
         },
         {
-            "key": "CODA_LEARNING_API_CLIENT_SECRET",
-            "value": "$CODA_LEARNING_API_CLIENT_SECRET"
+            "key": "CODA_SITE_CACHE_DB_HOST",
+            "value": "$CODA_SITE_CACHE_DB_HOST"
+        },
+        {
+            "key": "CODA_SITE_CACHE_DB_PASSWORD",
+            "value": "$CODA_SITE_CACHE_DB_PASSWORD"
+        },
+        {
+            "key": "CODA_SITE_CACHE_DB_PORT",
+            "value": "$CODA_SITE_CACHE_DB_PORT"
+        },
+        {
+            "key": "CODA_FHIR_STORE_CLIENT_ID",
+            "value": "$CODA_FHIR_STORE_CLIENT_ID"
+        },
+        {
+            "key": "CODA_FHIR_STORE_CLIENT_SECRET",
+            "value": "$CODA_FHIR_STORE_CLIENT_SECRET"
         }
     ]
 }

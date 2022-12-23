@@ -14,7 +14,8 @@
       "*.bin"
     ]
   },
-  "license": "MIT",
+  "author": "Louis Mullie",
+  "license": "GPL v3",
   "dependencies": {
     "@tensorflow/tfjs": "^3.13.0",
     "@tensorflow/tfjs-node": "^3.13.0",
