@@ -13,21 +13,21 @@ async function createMultiInputClassificationModel(mlpInputShape: number[]) {
 
   //input1
   const myInput1 = tf.input({ shape: mlpInputShape, name: 'input1' });
-  const myInput1Dense1 = tf.layers.dense({ units: 20, activation: 'relu', name: 'myInput1Dense1' }).apply(myInput1);
-  const myInput1Dense2 = tf.layers.dense({ units: 20, activation: 'relu', name: 'myInput1Dense2' }).apply(myInput1Dense1);
-  const output1 = tf.layers.dense({ units: 5, activation: 'relu', name: 'output1' }).apply(myInput1Dense2)
+  const myInput1Dense1 = tf.layers.dense({ units: 4, activation: 'relu', name: 'myInput1Dense1' }).apply(myInput1);
+  const myInput1Dense2 = tf.layers.dense({ units: 4, activation: 'relu', name: 'myInput1Dense2' }).apply(myInput1Dense1);
+  const output1 = tf.layers.dense({ units: 4, activation: 'relu', name: 'output1' }).apply(myInput1Dense2)
 
   //input2
   const myInput2 = tf.input({ shape: [width, height, depth], name: 'input2' });
-  const conv2d_1 = tf.layers.conv2d({ filters: 64, kernelSize: 3, activation: 'relu', name: 'conv2d_1' }).apply(myInput2);
+  const conv2d_1 = tf.layers.conv2d({ filters: 16, kernelSize: 3, activation: 'relu', name: 'conv2d_1' }).apply(myInput2);
   const conv2d_1_bn = tf.layers.batchNormalization().apply(conv2d_1);
   const conv2d_1_bn_pooled = tf.layers.maxPooling2d({ poolSize: [2, 2] }).apply(conv2d_1_bn);
 
   const flatten = tf.layers.flatten().apply(conv2d_1_bn_pooled);
-  const output2 = tf.layers.dense({ units: 5, activation: 'relu', name: 'output2' }).apply(flatten)
+  const output2 = tf.layers.dense({ units: 4, activation: 'relu', name: 'output2' }).apply(flatten)
 
-  const concat = tf.layers.concatenate({name:"concat"}).apply([output1, output2]);
-  const concat_dense = tf.layers.dense({ units: 10, activation: 'relu', name: 'concat_dense' }).apply(concat)
+  const concat = tf.layers.concatenate({ name: "concat" }).apply([output1, output2]);
+  const concat_dense = tf.layers.dense({ units: 8, activation: 'relu', name: 'concat_dense' }).apply(concat)
   const output = tf.layers.dense({ units: 1, activation: 'sigmoid', name: 'output' }).apply(concat_dense) //name last layer 'output' 
   var model = tf.model({ inputs: [myInput1, myInput2], outputs: output });
 
