@@ -2,7 +2,7 @@
     "appName": "learning-api",
     "instanceCount": 1,
     "notExposeAsWebApp": true,
-    "forceSsl": true,
+    "forceSsl": false,
     "envVars": [
         {
             "key": "CODA_LEARNING_API_PORT",
